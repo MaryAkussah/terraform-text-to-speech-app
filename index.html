@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text-to-Speech with AWS Polly</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: 0;
+      padding: 10px;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+      max-width: 700px;
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.2);
+      position: relative;
+    }
+
+    .auth-buttons {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+      z-index: 100;
+    }
+
+    .hamburger {
+      display: none;
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      z-index: 101;
+      background: rgba(255, 255, 255, 0.9);
+      border: none;
+      border-radius: 8px;
+      padding: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .hamburger span {
+      display: block;
+      width: 20px;
+      height: 2px;
+      background: #667eea;
+      margin: 4px 0;
+      transition: 0.3s;
+    }
+
+    .mobile-menu {
+      display: none;
+      position: fixed;
+      top: 60px;
+      right: 15px;
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      z-index: 100;
+      min-width: 160px;
+      border: 1px solid rgba(255,255,255,0.3);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+
+    .mobile-menu button {
+      width: 100%;
+      padding: 14px 18px;
+      border: none;
+      background: none;
+      text-align: left;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      color: #2d3748;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mobile-menu button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+      transition: left 0.5s;
+    }
+
+    .mobile-menu button:hover::before {
+      left: 100%;
+    }
+
+    .mobile-menu button:first-child {
+      background: linear-gradient(135deg, #48bb78, #38a169);
+      color: white;
+      border-radius: 15px 15px 0 0;
+    }
+
+    .mobile-menu button:first-child:hover {
+      background: linear-gradient(135deg, #38a169, #2f855a);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+    }
+
+    .mobile-menu button:last-child {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border-radius: 0 0 15px 15px;
+    }
+
+    .mobile-menu button:last-child:hover {
+      background: linear-gradient(135deg, #5a67d8, #6b46c1);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .auth-btn {
+      padding: 10px 24px;
+      font-size: 14px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      min-width: 100px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .signup-btn.auth-btn {
+      min-width: 120px;
+    }
+
+    .auth-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    }
+
+    .signin-btn {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+
+      color: white;
+    }
+
+    .signup-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+
+      color: white;
+    }
+
+    .auth-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+    }
+
+    .auth-form {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      padding: 40px;
+      border-radius: 20px;
+      width: 450px;
+      max-width: 90vw;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    .auth-form h2 {
+      text-align: center;
+      color: #2d3748;
+      font-weight: 700;
+      margin-bottom: 25px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .auth-form input {
+      width: 100%;
+      padding: 15px;
+      margin: 12px 0;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 16px;
+      background: #f8fafc;
+      transition: all 0.3s ease;
+    }
+
+    .auth-form input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      background: #fff;
+    }
+
+    .auth-form button {
+      width: 100%;
+      padding: 15px;
+      margin: 15px 0;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .auth-form button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: #f8fafc !important;
+      border: 1px solid #e2e8f0 !important;
+      width: 24px !important;
+      height: 24px !important;
+      border-radius: 50% !important;
+      font-size: 14px !important;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b !important;
+      transition: all 0.2s ease !important;
+      line-height: 1;
+      padding: 0 !important;
+      margin: 0 !important;
+      box-shadow: none !important;
+      font-weight: normal !important;
+    }
+
+    .close-btn:hover {
+      background: #e2e8f0 !important;
+      color: #475569 !important;
+      transform: scale(1.05) !important;
+      box-shadow: none !important;
+    }
+
+    .password-container {
+      position: relative;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #64748b;
+      font-size: 18px;
+      padding: 0;
+      width: auto !important;
+      height: auto !important;
+      margin: 0 !important;
+      box-shadow: none !important;
+    }
+
+    .password-toggle:hover {
+      color: #475569;
+      transform: translateY(-50%) scale(1.1) !important;
+      box-shadow: none !important;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2d3748;
+      font-weight: 700;
+      font-size: 1.8rem;
+      margin-bottom: 15px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #4a5568;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+
+    textarea, select {
+      width: 100%;
+      padding: 15px;
+      border-radius: 12px;
+      border: 2px solid #e2e8f0;
+      font-size: 16px;
+      font-family: inherit;
+      transition: all 0.3s ease;
+      background: #f8fafc;
+    }
+
+    #voice-select {
+      appearance: menulist;
+    }
+    
+    #voice-select:focus {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    
+    #voice-select option {
+      padding: 8px;
+    }
+
+    textarea:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      background: #fff;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .button-group {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin: 15px 0;
+    }
+
+    button {
+      padding: 15px 24px;
+      border-radius: 12px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: inherit;
+      position: relative;
+      overflow: hidden;
+      max-width: 300px;
+    }
+
+    button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    button:hover::before {
+      left: 100%;
+    }
+
+    #convert-btn {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      padding: 18px 30px;
+      font-size: 16px;
+      max-width: 350px;
+    }
+
+    #convert-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .download-audio-btn {
+      background: linear-gradient(135deg, #48bb78, #38a169);
+      color: white;
+      box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+      padding: 18px 30px;
+      font-size: 16px;
+      max-width: 350px;
+    }
+
+    .download-audio-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(72, 187, 120, 0.4);
+    }
+
+    audio {
+      width: 100%;
+      outline: none;
+      border-radius: 12px;
+      background: #f8fafc;
+      padding: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .audio-container {
+      margin-top: 15px;
+      padding: 15px;
+      background: rgba(102, 126, 234, 0.05);
+      border-radius: 15px;
+      border: 1px solid rgba(102, 126, 234, 0.1);
+    }
+
+    /* Tablet styles */
+    @media (max-width: 768px) {
+      .container {
+        padding: 30px;
+        margin: 15px;
+        max-width: 90%;
+      }
+      
+      .auth-buttons, #signout-container {
+        display: none !important;
+      }
+      
+      .hamburger {
+        display: block;
+      }
+      
+      h1 {
+        font-size: 2rem;
+        margin-bottom: 25px;
+      }
+      
+      .auth-form {
+        width: 400px;
+        padding: 35px;
+      }
+    }
+
+    /* Mobile styles */
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+      
+      .container {
+        padding: 20px;
+        margin: 5px;
+        max-width: 95%;
+      }
+      
+      .auth-buttons, #signout-container {
+        display: none !important;
+      }
+      
+      .hamburger {
+        display: block;
+      }
+      
+      #auth-required div {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      #auth-required .auth-btn {
+        width: 100%;
+        max-width: 200px;
+      }
+      
+      h1 {
+        font-size: 1.8rem;
+        margin-bottom: 20px;
+      }
+      
+      .button-group {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      button {
+        padding: 12px 16px;
+        font-size: 15px;
+      }
+      
+      .auth-form {
+        width: 95%;
+        padding: 25px;
+        margin: 10px;
+      }
+      
+      .auth-form input {
+        padding: 12px;
+        font-size: 16px;
+      }
+      
+      .auth-form button {
+        padding: 12px;
+        font-size: 15px;
+      }
+      
+      textarea {
+        min-height: 100px;
+        padding: 12px;
+      }
+      
+      .audio-container {
+        padding: 15px;
+      }
+    }
+
+    /* Small mobile styles */
+    @media (max-width: 480px) {
+      .container {
+        padding: 15px;
+      }
+      
+      h1 {
+        font-size: 1.6rem;
+      }
+      
+      .auth-form {
+        padding: 20px;
+      }
+      
+      .auth-form input, .auth-form button {
+        padding: 10px;
+        font-size: 14px;
+      }
+      
+      textarea, select {
+        padding: 10px;
+        font-size: 14px;
+      }
+      
+      button {
+        padding: 10px 12px;
+        font-size: 14px;
+      }
+    }
+
+    /* Large screens */
+    @media (min-width: 1200px) {
+      .container {
+        max-width: 800px;
+        padding: 50px;
+      }
+      
+      h1 {
+        font-size: 2.5rem;
+      }
+      
+      .auth-form {
+        width: 500px;
+        padding: 45px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-buttons" id="signout-container" style="display: none;">
+    <button class="auth-btn" onclick="signOut()" style="background: linear-gradient(135deg, #ef4444, #dc2626);">Sign Out</button>
+  </div>
+  
+  <button class="hamburger" onclick="toggleMobileMenu()">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+  
+  <div class="mobile-menu" id="mobileMenu">
+    <button id="mobile-signin" onclick="showSignInForm(); closeMobileMenu()">🔑 Sign In</button>
+    <button id="mobile-signup" onclick="showSignUpForm(); closeMobileMenu()">✨ Sign Up</button>
+    <button id="mobile-signout" onclick="signOut(); closeMobileMenu()" style="display: none; background: linear-gradient(135deg, #ef4444, #fa0303);">🚪 Sign Out</button>
+  </div>
+  
+  <div class="container">
+    <h1>🎤Text to Speech Converter</h1>
+
+    <div id="auth-required" style="text-align: center; padding: 40px; background: rgba(102, 126, 234, 0.05); border-radius: 15px; border: 1px solid rgba(102, 126, 234, 0.1);">
+      <h2 style="color: #667eea; margin-bottom: 20px;">🔐 Authentication Required</h2>
+      <p style="color: #64748b; margin-bottom: 25px; font-size: 16px;">Please sign in to access the Text to Speech Converter</p>
+      <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+        <button class="auth-btn signin-btn" onclick="showSignInForm()" style="min-width: 120px;">Sign In</button>
+        <button class="auth-btn signup-btn" onclick="showSignUpForm()" style="min-width: 120px;">Sign Up</button>
+      </div>
+    </div>
+
+    <div id="tts-forms" style="display: none;">
+      <div class="form-group">
+        <label for="text-input">✍️ Enter your text</label>
+        <textarea id="text-input" placeholder="Type your message here and watch it come to life..." maxlength="3000"></textarea>
+        <div style="text-align: right; margin-top: 5px; font-size: 12px; color: #64748b;">
+          <span id="char-count">0</span>/3000 characters
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 15px; margin-bottom: 12px;">
+        <div class="form-group" style="flex: 0.6; margin-bottom: 0;">
+          <label for="country-select">🌍 Country</label>
+          <select id="country-select">
+            <option value="US">🇺🇸 United States</option>
+            <option value="UK">🇬🇧 United Kingdom</option>
+            <option value="AU">🇦🇺 Australia</option>
+            <option value="IN">🇮🇳 India</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex: 1.4; margin-bottom: 0;">
+          <label for="voice-select">🎭 Voice</label>
+          <select id="voice-select">
+            <option value="Joanna">👩 Joanna (female)</option>
+            <option value="Matthew">👨 Matthew (male)</option>
+            <option value="Ivy">👩 Ivy (female)</option>
+            <option value="Justin">👨 Justin (male)</option>
+            <option value="Salli">👩 Salli (female)</option>
+            <option value="Kimberly">👩 Kimberly (female)</option>
+            <option value="Joey">👨 Joey (male)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button id="convert-btn">Convert to Audio</button>
+      </div>
+
+      <div class="audio-container">
+        <audio id="audio" controls></audio>
+      </div>
+
+        <div class="button-group">
+        <button class="download-audio-btn" id="download-audio-btn"> Download MP3</button>
+      </div>
+      
+
+    </div>
+  </div>
+
+  <div id="authModal" class="auth-modal">
+    <div class="auth-form">
+      <button class="close-btn" onclick="closeAuthModal()">&times;</button>
+      <h2 id="authTitle">Sign In</h2>
+      <input type="email" id="authEmail" placeholder="Email" required>
+      <div class="password-container">
+        <input type="password" id="authPassword" placeholder="Password" required>
+        <button type="button" class="password-toggle" onclick="togglePasswordVisibility()">
+          <span id="eyeIcon">👁️</span>
+        </button>
+      </div>
+      <input type="text" id="confirmationCode" placeholder="Confirmation Code" style="display:none;">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+        <button id="authSubmit" class="signin-btn" style="width: 80%; max-width: 300px;">Sign In</button>
+        <button id="confirmBtn" class="signup-btn" style="display:none; width: 80%; max-width: 300px;">Confirm Email</button>
+        <button id="verifyBtn" class="signup-btn" onclick="toggleVerification()" style="background: linear-gradient(135deg, #f093fb, #f5576c); display:none; width: 80%; max-width: 300px;">Need to Verify?</button>
+      </div>
+      <p id="authSwitchText" style="text-align: center; margin: 20px 0 10px 0; color: #64748b; font-size: 14px;">
+        Don't have an account? <a href="#" onclick="switchToSignUp()" style="color: #667eea; text-decoration: none; font-weight: 600;">Sign Up</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1563.0.min.js"></script>
+  <script>
+    const apiEndpoint = "https://sns97566hc.execute-api.us-east-2.amazonaws.com/prod/polly";
+    const userPoolId = "us-east-2_XRUCHBSc2";
+    const clientId = "6iab9n6li9r2t417n6u5emem40";
+    const region = "us-east-2";
+
+    AWS.config.region = region;
+    const cognitoIdentityServiceProvider = new AWS.CognitoIdentityServiceProvider();
+
+    const textInput = document.getElementById('text-input');
+    const countrySelect = document.getElementById('country-select');
+    const voiceSelect = document.getElementById('voice-select');
+    const convertBtn = document.getElementById('convert-btn');
+    const audioElement = document.getElementById('audio');
+    const downloadAudioBtn = document.getElementById('download-audio-btn');
+    const charCount = document.getElementById('char-count');
+    
+    const voices = {
+      US: [
+        {value: 'Joanna', label: '👩 Joanna (female)'},
+        {value: 'Matthew', label: '👨 Matthew (male)'},
+        {value: 'Ivy', label: '👩 Ivy (female)'},
+        {value: 'Justin', label: '👨 Justin (male)'},
+        {value: 'Salli', label: '👩 Salli (female)'},
+        {value: 'Kimberly', label: '👩 Kimberly (female)'},
+        {value: 'Joey', label: '👨 Joey (male)'}
+      ],
+      UK: [
+        {value: 'Amy', label: '👩 Amy (female)'},
+        {value: 'Brian', label: '👨 Brian (male)'},
+        {value: 'Emma', label: '👩 Emma (female)'}
+      ],
+      AU: [
+        {value: 'Russell', label: '👨 Russell (male)'},
+        {value: 'Nicole', label: '👩 Nicole (female)'},
+        {value: 'Olivia', label: '👩 Olivia (female)'}
+      ],
+      IN: [
+        {value: 'Raveena', label: '👩 Raveena (female)'},
+        {value: 'Aditi', label: '👩 Aditi (female)'}
+      ]
+    };
+    
+    function updateVoices() {
+      const country = countrySelect.value;
+      const countryVoices = voices[country];
+      voiceSelect.innerHTML = '';
+      countryVoices.forEach(voice => {
+        const option = document.createElement('option');
+        option.value = voice.value;
+        option.textContent = voice.label;
+        voiceSelect.appendChild(option);
+      });
+    }
+    
+    countrySelect.addEventListener('change', updateVoices);
+    
+    // Update character count
+    textInput.addEventListener('input', function() {
+      const count = this.value.length;
+      charCount.textContent = count;
+      charCount.style.color = count > 2800 ? '#ef4444' : count > 2500 ? '#f59e0b' : '#64748b';
+    });
+    
+    let currentAudioUrl = null;
+    let jwtToken = localStorage.getItem('jwtToken');
+    let sessionTimeout;
+    const SESSION_TIMEOUT = 10 * 60 * 1000; // 10 minutes in milliseconds
+
+    // Session timeout functions
+    function resetSessionTimeout() {
+      clearTimeout(sessionTimeout);
+      if (jwtToken) {
+        sessionTimeout = setTimeout(() => {
+          signOut();
+        }, SESSION_TIMEOUT);
+      }
+    }
+
+    function clearSessionTimeout() {
+      clearTimeout(sessionTimeout);
+    }
+
+    // Track user activity
+    ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'].forEach(event => {
+      document.addEventListener(event, resetSessionTimeout, true);
+    });
+
+    // Check if user is already signed in on page load
+    if (jwtToken) {
+      showTTSForms();
+      document.getElementById('signout-container').style.display = 'flex';
+      resetSessionTimeout();
+    }
+
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobileMenu');
+      menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function closeMobileMenu() {
+      document.getElementById('mobileMenu').style.display = 'none';
+    }
+
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', function(event) {
+      const menu = document.getElementById('mobileMenu');
+      const hamburger = document.querySelector('.hamburger');
+      if (!menu.contains(event.target) && !hamburger.contains(event.target)) {
+        menu.style.display = 'none';
+      }
+    });
+
+    function togglePasswordVisibility() {
+      const passwordField = document.getElementById('authPassword');
+      const eyeIcon = document.getElementById('eyeIcon');
+      
+      if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        eyeIcon.textContent = '🙈';
+      } else {
+        passwordField.type = 'password';
+        eyeIcon.textContent = '👁️';
+      }
+    }
+
+    function showSignInForm() {
+      document.getElementById('authModal').style.display = 'block';
+      document.getElementById('authTitle').textContent = 'Sign In';
+      document.getElementById('authSubmit').textContent = 'Sign In';
+      document.getElementById('authSubmit').onclick = handleSignIn;
+      document.getElementById('verifyBtn').style.display = 'block';
+      document.getElementById('authSwitchText').innerHTML = 'Don\'t have an account? <a href="#" onclick="switchToSignUp()" style="color: #667eea; text-decoration: none; font-weight: 600;">Sign Up</a>';
+    }
+
+    function showSignUpForm() {
+      document.getElementById('authModal').style.display = 'block';
+      document.getElementById('authTitle').textContent = 'Sign Up';
+      document.getElementById('authSubmit').textContent = 'Sign Up';
+      document.getElementById('authSubmit').onclick = handleSignUp;
+      document.getElementById('authSwitchText').innerHTML = 'Already have an account? <a href="#" onclick="switchToSignIn()" style="color: #667eea; text-decoration: none; font-weight: 600;">Sign In</a>';
+    }
+
+    function switchToSignUp() {
+      resetAuthForm();
+      showSignUpForm();
+    }
+
+    function switchToSignIn() {
+      resetAuthForm();
+      showSignInForm();
+    }
+
+    function toggleVerification() {
+      const passwordField = document.getElementById('authPassword');
+      const passwordContainer = document.querySelector('.password-container');
+      const codeField = document.getElementById('confirmationCode');
+      const submitBtn = document.getElementById('authSubmit');
+      const confirmBtn = document.getElementById('confirmBtn');
+      const verifyBtn = document.getElementById('verifyBtn');
+      
+      if (codeField.style.display === 'none') {
+        // Switch to verification mode
+        document.getElementById('authTitle').textContent = 'Verify Email';
+        passwordContainer.style.display = 'none';
+        codeField.style.display = 'block';
+        submitBtn.style.display = 'none';
+        confirmBtn.style.display = 'block';
+        verifyBtn.textContent = 'Back to Sign In';
+        confirmBtn.onclick = handleVerification;
+      } else {
+        // Switch back to sign in mode
+        document.getElementById('authTitle').textContent = 'Sign In';
+        passwordContainer.style.display = 'block';
+        codeField.style.display = 'none';
+        submitBtn.style.display = 'block';
+        confirmBtn.style.display = 'none';
+        verifyBtn.textContent = 'Need to Verify?';
+      }
+    }
+
+    function handleVerification() {
+      const email = document.getElementById('authEmail').value;
+      const code = document.getElementById('confirmationCode').value;
+      if (email && code) {
+        confirmSignUp(email, code);
+      } else {
+        alert('Please enter both email and confirmation code.');
+      }
+    }
+
+    function closeAuthModal() {
+      document.getElementById('authModal').style.display = 'none';
+      resetAuthForm();
+    }
+
+    function handleSignIn() {
+      const email = document.getElementById('authEmail').value;
+      const password = document.getElementById('authPassword').value;
+      if (email && password) {
+        signIn(email, password);
+        closeAuthModal();
+      }
+    }
+
+    function handleSignUp() {
+      const email = document.getElementById('authEmail').value;
+      const password = document.getElementById('authPassword').value;
+      if (email && password) {
+        signUp(email, password);
+        closeAuthModal();
+      }
+    }
+
+    function signIn(email, password) {
+      const params = {
+        AuthFlow: 'USER_PASSWORD_AUTH',
+        ClientId: clientId,
+        AuthParameters: {
+          USERNAME: email,
+          PASSWORD: password
+        }
+      };
+
+      cognitoIdentityServiceProvider.initiateAuth(params, (err, data) => {
+        if (err) {
+          if (err.code === 'UserNotFoundException') {
+            alert('User not found. Please sign up first.');
+          } else if (err.code === 'UserNotConfirmedException') {
+            alert('Please confirm your email first. Check your inbox for the confirmation code.');
+            showConfirmationForm(email);
+          } else {
+            alert('Sign in failed: ' + err.message);
+          }
+        } else {
+          jwtToken = data.AuthenticationResult.IdToken;
+          localStorage.setItem('jwtToken', jwtToken);
+          alert('Successfully signed in!');
+          showTTSForms();
+          document.getElementById('signout-container').style.display = 'flex';
+          resetSessionTimeout();
+          closeAuthModal();
+        }
+      });
+    }
+
+    function signUp(email, password) {
+      const params = {
+        ClientId: clientId,
+        Username: email,
+        Password: password,
+        UserAttributes: [{
+          Name: 'email',
+          Value: email
+        }]
+      };
+
+      cognitoIdentityServiceProvider.signUp(params, (err, data) => {
+        if (err) {
+          alert('Sign up failed: ' + err.message);
+        } else {
+          alert('Sign up successful! Please check your email for the confirmation code.');
+          showConfirmationForm(email);
+        }
+      });
+    }
+
+    function showConfirmationForm(email) {
+      document.getElementById('authTitle').textContent = 'Confirm Email';
+      document.getElementById('authEmail').value = email;
+      document.getElementById('authEmail').disabled = true;
+      document.getElementById('authPassword').style.display = 'none';
+      document.getElementById('confirmationCode').style.display = 'block';
+      document.getElementById('authSubmit').style.display = 'none';
+      document.getElementById('confirmBtn').style.display = 'block';
+      document.getElementById('confirmBtn').onclick = () => confirmSignUp(email);
+      document.getElementById('authModal').style.display = 'block';
+    }
+
+    function confirmSignUp(email, code = null) {
+      const confirmationCode = code || document.getElementById('confirmationCode').value;
+      if (!confirmationCode) {
+        alert('Please enter the confirmation code.');
+        return;
+      }
+
+      const params = {
+        ClientId: clientId,
+        Username: email,
+        ConfirmationCode: confirmationCode
+      };
+
+      cognitoIdentityServiceProvider.confirmSignUp(params, (err, data) => {
+        if (err) {
+          alert('Confirmation failed: ' + err.message);
+        } else {
+          alert('Email confirmed successfully! You can now sign in.');
+          resetAuthForm();
+          closeAuthModal();
+        }
+      });
+    }
+
+    function resetAuthForm() {
+      document.getElementById('authTitle').textContent = 'Sign In';
+      document.getElementById('authEmail').disabled = false;
+      document.getElementById('authPassword').style.display = 'block';
+      document.getElementById('confirmationCode').style.display = 'none';
+      document.getElementById('authSubmit').style.display = 'block';
+      document.getElementById('confirmBtn').style.display = 'none';
+      document.getElementById('verifyBtn').style.display = 'none';
+      document.getElementById('verifyBtn').textContent = 'Need to Verify?';
+      document.getElementById('authEmail').value = '';
+      document.getElementById('authPassword').value = '';
+      document.getElementById('confirmationCode').value = '';
+    }
+
+    function validateInput(text, voiceId) {
+      const errors = [];
+      const maxLength = 3000;
+      const allowedVoices = ['Joanna', 'Matthew', 'Amy', 'Brian', 'Nicole', 'Russell', 'Raveena'];
+      
+      if (!text || !text.trim()) {
+        errors.push('Please enter some text to convert.');
+      } else if (text.length > maxLength) {
+        errors.push(`Text is too long. Maximum ${maxLength} characters allowed.`);
+      }
+      
+      if (!allowedVoices.includes(voiceId)) {
+        errors.push('Please select a valid voice.');
+      }
+      
+      return errors;
+    }
+
+    function showTTSForms() {
+      document.getElementById('auth-required').style.display = 'none';
+      document.getElementById('tts-forms').style.display = 'block';
+      document.getElementById('mobile-signin').style.display = 'none';
+      document.getElementById('mobile-signup').style.display = 'none';
+      document.getElementById('mobile-signout').style.display = 'block';
+    }
+
+    function hideTTSForms() {
+      document.getElementById('auth-required').style.display = 'block';
+      document.getElementById('tts-forms').style.display = 'none';
+      document.getElementById('mobile-signin').style.display = 'block';
+      document.getElementById('mobile-signup').style.display = 'block';
+      document.getElementById('mobile-signout').style.display = 'none';
+    }
+
+    function signOut() {
+      jwtToken = null;
+      localStorage.removeItem('jwtToken');
+      clearSessionTimeout();
+      hideTTSForms();
+      document.getElementById('signout-container').style.display = 'none';
+      alert('Successfully signed out!');
+    }
+
+    async function generateSpeech() {
+      if (!jwtToken) {
+        alert('Please sign in first.');
+        return;
+      }
+
+      const text = textInput.value.trim();
+      const voiceId = voiceSelect.value;
+
+      // Validate input on frontend
+      const validationErrors = validateInput(text, voiceId);
+      if (validationErrors.length > 0) {
+        alert(validationErrors.join('\n'));
+        return;
+      }
+
+      try {
+        console.log('Sending request to:', apiEndpoint);
+        console.log('Request body:', { text, voiceId });
+        
+        const response = await fetch(apiEndpoint, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${jwtToken}`
+          },
+          body: JSON.stringify({ text, voiceId })
+        });
+
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Error response:', errorText);
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('Success response:', data);
+        const presignedUrl = data.url;
+
+        audioElement.src = presignedUrl;
+        return presignedUrl;
+      } catch (err) {
+        console.error('Full error:', err);
+        alert(`Error generating speech: ${err.message}`);
+      }
+    }
+
+    convertBtn.addEventListener('click', async () => {
+      const url = await generateSpeech();
+      if (url) {
+        currentAudioUrl = url;
+        audioElement.play();
+      }
+    });
+
+    // Auto-regenerate when voice or country changes
+    voiceSelect.addEventListener('change', async () => {
+      if (audioElement.src && textInput.value.trim()) {
+        const url = await generateSpeech();
+        if (url) {
+          currentAudioUrl = url;
+        }
+      }
+    });
+    
+    countrySelect.addEventListener('change', async () => {
+      if (audioElement.src && textInput.value.trim()) {
+        const url = await generateSpeech();
+        if (url) {
+          currentAudioUrl = url;
+        }
+      }
+    });
+
+    downloadAudioBtn.addEventListener('click', async () => {
+      if (!audioElement.src) {
+        alert('No audio to download. Please generate speech first.');
+        return;
+      }
+
+      try {
+        const response = await fetch(audioElement.src);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'speech.mp3';
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error('Download failed:', error);
+        alert('Download failed. Please try again.');
+      }
+    });
+  </script>
+</body>
+</html>
