@@ -22,7 +22,7 @@ A serverless text-to-speech application built with AWS services, featuring user 
                                                │   (Audio Files) │
                                                └─────────────────┘
 ```
-<img width="926" height="530" alt="Screenshot 2025-09-18 124122" src="https://github.com/user-attachments/assets/08dd3a96-7857-4b15-9b65-9befdcb48dc1" />
+<img width="926" height="530" alt="Screenshot 2025-09-18 124122" src="architecture img/Screenshot 2025-09-18 124320.png" />
 
 ## 🚀 Features
 
