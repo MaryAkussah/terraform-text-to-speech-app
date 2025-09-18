@@ -7,7 +7,7 @@ A serverless text-to-speech application built with AWS services, featuring user 
 
 <img width="926" height="530" alt="Screenshot 2025-09-18 124122" src="architecture img/Screenshot 2025-09-18 124320.png" />
 
-<img width="926" height="530" alt="Screenshot 2025-09-18 124122" src="aarchitecture img/Screenshot 2025-09-18 124122.png" />
+<img width="926" height="530" alt="Screenshot 2025-09-18 124122" src="architecture img/Screenshot 2025-09-18 124122.png" />
 
 ## 🚀 Features
 
