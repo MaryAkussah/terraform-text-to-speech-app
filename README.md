@@ -1,131 +1,166 @@
-# 🎤 AWS Text-to-Speech Application
 
-A serverless text-to-speech application built with AWS services, featuring user authentication, real-time speech synthesis, and comprehensive monitoring.
+---
+
+# 🎤 AWS Text-to-Speech (TTS) Application
+
+A **scalable, serverless text-to-speech application** built with AWS services. It provides secure user authentication, real-time speech synthesis, and comprehensive monitoring using AWS best practices.
+
+---
 
 ## 🏗️ Architecture Overview
 
+<img width="926" height="530" alt="TTS Architecture" src="architecture img/Screenshot 2025-09-18 124122.png" />  
 
-<img width="926" height="530" alt="Screenshot 2025-09-18 124122" src="architecture img/Screenshot 2025-09-18 124320.png" />
 
-<img width="926" height="530" alt="Screenshot 2025-09-18 124122" src="architecture img/Screenshot 2025-09-18 124122.png" />
+<img width="926" height="530" alt="TTS Architecture" src="architecture img/Screenshot 2025-09-18 124320.png" />  
+
+**High-Level Flow:**
+
+1. User accesses frontend hosted on **Amazon S3**
+2. **Amazon Cognito** handles authentication and JWT token issuance
+3. **API Gateway** routes requests securely with Cognito authorization
+4. **AWS Lambda** integrates with **Amazon Polly** for text-to-speech conversion
+5. Audio is stored in **Amazon S3 (Audio Bucket)** and metadata in **DynamoDB**
+6. A **Presigned URL** is returned to the frontend for playback/download
+7. **CloudWatch, X-Ray, and SNS** provide monitoring, tracing, and alerts
+
+---
 
 ## 🚀 Features
 
-- **🔐 User Authentication**: Secure sign-up/sign-in with AWS Cognito
-- **⏰ Session Timeout**: Auto-logout after 10 minutes of inactivity
-- **🎭 Multiple Voices**: 15+ AWS Polly voices across 4 countries
-- **🌍 Multi-Country Support**: US, UK, Australia, India voices
-- **📱 Responsive Design**: Mobile-first UI with hamburger menu
-- **⬇️ Audio Download**: Direct MP3 download functionality
-- **🔄 Auto-Cleanup**: 7-day lifecycle policy for audio files
-- **📊 Monitoring**: CloudWatch logs, alarms, and dashboard
-- **🔍 Tracing**: AWS X-Ray integration for debugging
-- **🔄 Auto-Regeneration**: Audio updates when voice/country changes
+* **🔐 Secure Authentication** with AWS Cognito (sign-up, sign-in, email verification)
+* **⏰ Session Management**: Auto-logout after 10 minutes of inactivity
+* **🎭 Voice Selection**: 15+ Amazon Polly voices across US, UK, AU, and IN
+* **📱 Responsive Design**: Mobile-first UI with modern navigation
+* **⬇️ Audio Download**: Direct MP3 downloads via Presigned URLs
+* **♻️ Auto-Cleanup**: S3 lifecycle deletes audio files after 7 days
+* **📊 Monitoring & Alerts**: CloudWatch dashboards, alarms, and SNS notifications
+* **🔍 Distributed Tracing**: End-to-end visibility with AWS X-Ray
+* **🔄 Auto-Regeneration**: Recreate audio when voice/country is changed
 
-## 🛠️ AWS Resources Used
+---
+
+## 🛠️ AWS Services
 
 ### Core Services
-| Service | Resource | Purpose |
-|---------|----------|---------|
-| **S3** | 2 Buckets | Frontend hosting + Audio storage |
-| **Lambda** | 1 Function | Text-to-speech processing |
-| **API Gateway** | HTTP API | RESTful API endpoint |
-| **Cognito** | User Pool | Authentication & authorization |
-| **Polly** | TTS Service | Speech synthesis |
-| **DynamoDB** | 1 Table | Metadata storage |
+
+| Service         | Resource    | Purpose                            |
+| --------------- | ----------- | ---------------------------------- |
+| **S3**          | 2 Buckets   | Frontend hosting & audio storage   |
+| **Lambda**      | 1 Function  | Text-to-speech processing          |
+| **API Gateway** | HTTP API    | RESTful API endpoint               |
+| **Cognito**     | User Pool   | Authentication & JWT authorization |
+| **Polly**       | TTS Service | Speech synthesis                   |
+| **DynamoDB**    | 1 Table     | Metadata storage                   |
 
 ### Monitoring & Logging
-| Service | Resource | Purpose |
-|---------|----------|---------|
-| **CloudWatch** | Log Groups | Lambda & API Gateway logs |
-| **CloudWatch** | 4 Alarms | Error rate & duration monitoring |
-| **CloudWatch** | Dashboard | Centralized metrics view |
-| **SNS** | Topic | Alert notifications |
-| **X-Ray** | Tracing | Request flow analysis |
+
+| Service        | Resource   | Purpose                             |
+| -------------- | ---------- | ----------------------------------- |
+| **CloudWatch** | Log Groups | Capture Lambda & API Gateway logs   |
+| **CloudWatch** | 4 Alarms   | Monitor errors, latency, duration   |
+| **CloudWatch** | Dashboard  | Centralized metrics visualization   |
+| **SNS**        | Topic      | Email alerts for system issues      |
+| **X-Ray**      | Tracing    | Performance and dependency analysis |
+
+---
 
 ## 📁 Project Structure
 
 ```
 terraform-tts-deployment/
-├── 📄 main.tf              # Core infrastructure
-├── 📄 monitoring.tf        # Logging & monitoring setup
-├── 📄 dashboard.tf         # CloudWatch dashboard
-├── 📄 variables.tf         # Configuration variables
-├── 📄 outputs.tf           # Resource outputs
-├── 📄 index.html           # Frontend application
-├── 📁 lambda/
-│   ├── 🐍 tts_lambda.py    # Lambda function code
-│   └── 📦 tts_lambda.zip   # Deployment package
-├── 📄 deploy-monitoring.bat # Deployment script
-└── 📄 README.md            # This file
+├── main.tf              # Core infrastructure
+├── monitoring.tf        # Logging & monitoring setup
+├── dashboard.tf         # CloudWatch dashboard
+├── variables.tf         # Configuration variables
+├── outputs.tf           # Resource outputs
+├── index.html           # Frontend application
+├── lambda/
+│   ├── tts_lambda.py    # Lambda function code
+│   └── tts_lambda.zip   # Deployment package
+├── deploy-monitoring.bat # Deployment script
+└── README.md            # Documentation
 ```
 
-## 🚀 Quick Start
+---
+
+## ⚡ Deployment Guide
 
 ### Prerequisites
-- AWS CLI configured
-- Terraform >= 1.5.0
-- Python 3.11+
 
-### Deployment Steps
+* AWS CLI configured
+* Terraform v1.5+
+* Python 3.11+
+
+### Steps
 
 1. **Clone & Configure**
+
    ```bash
    git clone <your-repo-url>
    cd terraform-tts-deployment
    ```
 
 2. **Update Variables**
-   ```bash
-   # Edit variables.tf
+
+   ```hcl
    variable "alert_email" {
      default = "maryakussah123@gmail.com"  
    }
    ```
 
-3. **Deploy Infrastructure**
+3. **Deploy Core Infrastructure**
+
    ```bash
    terraform init
    terraform plan
    terraform apply
    ```
 
-4. **Deploy Monitoring** (Optional)
+4. **Deploy Monitoring (Optional)**
+
    ```bash
    # Windows
    deploy-monitoring.bat
-   
+
    # Linux/Mac
-   terraform apply -var="alert_email= maryakussah123@gmail.com"
+   terraform apply -var="alert_email=maryakussah123@gmail.com"
    ```
 
 5. **Upload Frontend**
+
    ```bash
    aws s3 cp index.html s3://my-tts-website-terraform/
    ```
 
+---
+
 ## 📊 Monitoring & Alerts
 
-### CloudWatch Alarms
-- **Lambda Error Rate**: Triggers when >5% error rate
-- **Lambda Duration**: Alerts on >10s execution time
-- **API 4XX Errors**: Monitors client errors >10/5min
-- **API 5XX Errors**: Alerts on any server errors
+* **CloudWatch Alarms**:
 
-### Log Groups
-- `/aws/lambda/PollyTTSLambda`: Function execution logs
-- `/aws/apigateway/PollyTTSAPI`: API request/response logs
+  * Lambda error rate >5%
+  * Lambda duration >10s
+  * API 4XX >10/5min
+  * API 5XX (any occurrence)
 
-### Dashboard Metrics
-- Lambda invocations, errors, duration
-- API Gateway request count, latency, errors
-- Recent log entries
+* **Log Groups**:
 
-## 🔧 Configuration Options
+  * `/aws/lambda/PollyTTSLambda`
+  * `/aws/apigateway/PollyTTSAPI`
 
-### Voice Selection
+* **Dashboards**:
+
+  * Lambda: invocations, errors, duration
+  * API Gateway: requests, latency, errors
+
+---
+
+## 🔧 Configuration
+
+### Voice Options
+
 ```javascript
-// Available voices by country
 const voices = {
   US: ['Joanna', 'Matthew', 'Ivy', 'Justin', 'Salli', 'Kimberly', 'Joey'],
   UK: ['Amy', 'Brian', 'Emma'],
@@ -135,119 +170,116 @@ const voices = {
 ```
 
 ### Session Management
-- **Timeout**: 10 minutes of inactivity
-- **Activity Tracking**: Mouse, keyboard, touch, scroll events
-- **Silent Logout**: No warning, automatic redirect to login
 
-### Text Limits
-- **Maximum**: 3000 characters
-- **Validation**: Client & server-side
-- **Warning**: Visual indicators at 2500+ chars
+* Auto-logout after 10 minutes
+* Monitors mouse, keyboard, touch, scroll events
+* Silent logout → redirect to login
 
-### Audio Storage
-- **Format**: MP3
-- **Retention**: 7 days (auto-delete)
-- **Access**: Presigned URLs (1-hour expiry)
+### Limits
 
-## 🎯 Improvements & Next Steps
+* Max input: **3000 characters**
+* Warning at 2500+ characters
+* MP3 output, 7-day retention, 1-hour Presigned URLs
 
-### 🔒 Security Enhancements
-- [ ] Implement rate limiting
-- [ ] Add WAF protection
-- [ ] Enable VPC endpoints
-- [ ] Rotate access keys regularly
+---
 
-### 🚀 Performance Optimizations
-- [ ] Add CloudFront CDN
-- [ ] Implement Lambda provisioned concurrency
-- [ ] Use S3 Transfer Acceleration
-- [ ] Add Redis caching layer
+## 🎯 Roadmap
 
-### 📱 Feature Additions
-- [x] **Session Timeout**: 10-minute auto-logout ✅
-- [x] **Multi-Country Voices**: US, UK, AU, IN support ✅
-- [x] **Auto-Regeneration**: Voice change triggers new audio ✅
-- [ ] **SSML Support**: Advanced speech markup
-- [ ] **Voice Cloning**: Custom voice training
-- [ ] **Batch Processing**: Multiple text files
-- [ ] **Audio Effects**: Speed, pitch, volume controls
-- [ ] **History**: User's previous conversions
-- [ ] **Sharing**: Public audio links
+### Security Enhancements
 
-### 🔍 Monitoring Improvements
-- [ ] Custom metrics dashboard
-- [ ] Cost monitoring alerts
-- [ ] Performance insights
-- [ ] User analytics tracking
+* [ ] API rate limiting
+* [ ] AWS WAF integration
+* [ ] VPC endpoints for private traffic
+* [ ] IAM key rotation policy
 
-### 🏗️ Architecture Enhancements
-- [ ] **Multi-region**: Global deployment
-- [ ] **Microservices**: Split into smaller functions
-- [ ] **Event-driven**: SQS/EventBridge integration
-- [ ] **CI/CD Pipeline**: Automated deployments
+### Performance Improvements
+
+* [ ] Add CloudFront CDN
+* [ ] Enable Lambda provisioned concurrency
+* [ ] Use S3 Transfer Acceleration
+* [ ] Add Redis caching layer
+
+### Feature Additions
+
+* [x] Session Timeout ✅
+* [x] Multi-Country Voices ✅
+* [x] Auto-Regeneration ✅
+* [ ] SSML support
+* [ ] Voice cloning
+* [ ] Batch processing
+* [ ] Audio effects (speed, pitch, volume)
+* [ ] Conversion history
+* [ ] Audio sharing links
+
+---
 
 ## 💰 Cost Optimization
 
-### Current Costs (Estimated)
-- **Lambda**: ~$0.20/million requests
-- **API Gateway**: ~$1.00/million requests
-- **S3**: ~$0.023/GB/month
-- **Polly**: ~$4.00/million characters
-- **CloudWatch**: ~$0.50/GB ingested
+### Current Estimates
 
-### Cost Reduction Tips
-- Use S3 Intelligent Tiering
-- Implement request caching
-- Optimize Lambda memory allocation
-- Set up billing alerts
+* **Lambda**: \~\$0.20 / 1M requests
+* **API Gateway**: \~\$1.00 / 1M requests
+* **S3**: \~\$0.023 / GB / month
+* **Polly**: \~\$4.00 / 1M characters
+* **CloudWatch**: \~\$0.50 / GB logs
+
+### Recommendations
+
+* Enable **S3 Intelligent Tiering**
+* Optimize **Lambda memory allocation**
+* Use **request caching** in API Gateway
+* Set up **billing alerts**
+
+---
 
 ## 🐛 Troubleshooting
 
-### Common Issues
-
 **Authentication Errors**
+
 ```bash
-# Check Cognito configuration
 aws cognito-idp describe-user-pool --user-pool-id <pool-id>
 ```
 
 **Lambda Timeouts**
+
 ```bash
-# Check CloudWatch logs
 aws logs describe-log-groups --log-group-name-prefix "/aws/lambda"
 ```
 
-**S3 Upload Failures**
+**S3 Upload Issues**
+
 ```bash
-# Verify bucket permissions
 aws s3api get-bucket-policy --bucket my-tts-website-terraform
 ```
 
-## 📞 Support & Contributing
+---
 
-### Getting Help
-- Check CloudWatch logs first
-- Review AWS service quotas
-- Validate IAM permissions
-- Test with minimal input
+## 🤝 Contributing
 
-### Contributing
-1. Fork the repository
-2. Create feature branch
-3. Add tests for new features
-4. Submit pull request
+1. Fork the repo
+2. Create a feature branch
+3. Add tests for new functionality
+4. Submit a pull request
+
+---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **MIT License** – see the [LICENSE](LICENSE) file for details.
+
+---
 
 ## 🙏 Acknowledgments
 
-- AWS Documentation & Examples
-- Terraform AWS Provider
-- Bootstrap CSS Framework
-- AWS Polly Voice Samples
--Amazon Q
+* AWS Documentation & Sample Code
+* Terraform AWS Provider
+* Bootstrap CSS Framework
+* Amazon Polly Voice Samples
+* Amazon Q
+
 ---
 
-**⭐ Star this repo if it helped you build your own TTS application!**
+✨ If you find this project useful, please **star ⭐ the repo** to support development!
+
+---
+
