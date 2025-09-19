@@ -20,7 +20,7 @@ A **scalable, serverless text-to-speech application** built with AWS services. I
 2. **Amazon Cognito** handles authentication and JWT token issuance
 3. **API Gateway** routes requests securely with Cognito authorization
 4. **AWS Lambda** integrates with **Amazon Polly** for text-to-speech conversion
-5. Audio is stored in **Amazon S3 (Audio Bucket)** and metadata in **DynamoDB**
+5. Audio is stored in **Amazon S3 (Audio Bucket)**
 6. A **Presigned URL** is returned to the frontend for playback/download
 7. **CloudWatch, X-Ray, and SNS** provide monitoring, tracing, and alerts
 
