@@ -184,6 +184,31 @@ const voices = {
 ---
 
 ## 🎯 Roadmap
+🔮 Planned Improvements
+
+**CloudFront (or Amplify)**
+
+Add Amazon CloudFront in front of S3 for global content delivery with low latency.
+
+Alternative: AWS Amplify for frontend hosting + CI/CD pipeline.
+
+**SSML Support for Polly**
+
+Enhance speech generation with Speech Synthesis Markup Language (SSML).
+
+Allows control over pauses, emphasis, pitch, and pronunciation.
+
+**Conversion History**
+
+Extend DynamoDB schema to keep a full history of conversions per user.
+
+Build a UI component so users can view, replay, and re-download past audio files.
+
+**Audio Sharing Links**
+
+Generate shareable Presigned URLs with configurable expiry times.
+
+Optionally integrate CloudFront Signed URLs for global sharing with better performance.
 
 ### Security Enhancements
 
