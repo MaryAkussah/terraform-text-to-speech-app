@@ -5,6 +5,7 @@
 
 A **scalable, serverless text-to-speech application** built with AWS services. It provides secure user authentication, real-time speech synthesis, and comprehensive monitoring using AWS best practices.
 
+Link: http://my-tts-website-terraform.s3-website.us-east-2.amazonaws.com/
 ---
 
 ## 🏗️ Architecture Overview
